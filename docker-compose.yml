@@ -1,0 +1,111 @@
+version: "3.6"
+services:
+  nginx:
+    image: nginx:1.15
+    hostname: nginx
+    domainname: sample.localhost
+    networks:
+      network:
+        ipv4_address: 172.16.237.10
+      reverse-proxy:
+    ports:
+      - "8081:80"
+    volumes:
+      - cache-data:/var/www/var/cache # Project cache dir
+      - log-data:/var/www/var/log # Project log dir
+      # Hosts
+      - ./container/nginx/host/sample.localhost.conf:/etc/nginx/conf.d/sample.localhost.conf
+    links:
+      - php
+    env_file:
+      - .env
+    environment:
+      VIRTUAL_HOST: "${APP_HOST}"
+      NGINX_HOST: "${APP_HOST}"
+      PHP_IDE_CONFIG: "serverName=${APP_HOST}"
+  php:
+    build:
+      context: ./container/php
+      dockerfile: Dockerfile
+    hostname: php
+    networks:
+      network:
+        ipv4_address: 172.16.237.20
+    links:
+      - mysql
+      - mailcatcher
+    env_file:
+      - .env
+    expose:
+      - 9000
+    ports:
+      - "9001"
+    volumes:
+      - cache-data:/var/www/var/cache # Project cache dir
+      - log-data:/var/www/var/log # Project log dir
+    environment:
+      PHP_IDE_CONFIG: "serverName=${APP_HOST}"
+  mysql:
+    image: mysql:5.6
+    hostname: mysql
+    networks:
+      network:
+        ipv4_address: 172.16.237.30
+    ports:
+      - "33306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: sample
+  memcache:
+      image: memcached:1.5
+      hostname: memcache
+      networks:
+        network:
+          ipv4_address: 172.16.237.40
+  mailcatcher:
+      image: yappabe/mailcatcher
+      hostname: mailcatcher
+      networks:
+        network:
+          ipv4_address: 172.16.237.50
+        reverse-proxy:
+      ports:
+          - "1027:1025"
+          - "1082:1080"
+      environment:
+        VIRTUAL_HOST: "mail.${APP_DOMAIN}"
+        VIRTUAL_PORT: "1080"
+  redis-session:
+    image: redis:4
+    hostname: redis-session
+    networks:
+      network:
+        ipv4_address: 172.16.237.60
+    ports:
+      - "6379:6379"
+volumes:
+  cache-data:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: uid=1000,gid=1000
+  log-data:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: uid=1000,gid=1000
+  mysql-data:
+networks:
+  reverse-proxy:
+    external:
+      name: dch-reverse-proxy
+  network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      -
+        subnet: 172.16.237.0/24

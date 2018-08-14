@@ -1,0 +1,8 @@
+version: "3.6"
+services:
+  nginx:
+    volumes:
+    - ${APP_PATH}:/var/www
+  php:
+    volumes:
+    - ${APP_PATH}:/var/www
