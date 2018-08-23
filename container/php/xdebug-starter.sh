@@ -10,7 +10,9 @@ if [ -z "$HOST" ]; then
 fi
 
 # try to get the linux host ip
-HOST=$(ip route | awk 'NR==1 {print $3}')
+if [ -z "$HOST" ]; then
+    HOST=$(ip route | awk 'NR==1 {print $3}')
+fi
 
 # use the ip alias loopback
 if [ -z "$HOST" ]; then
