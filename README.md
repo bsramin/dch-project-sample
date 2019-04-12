@@ -4,7 +4,7 @@ For demo only - do not use in production
 
 ## Installation
 
-- Clone locally [dhc](https://github.com/feries/dch)
+- Clone locally [dch](https://github.com/bsramin/dch)
 - Clone this project within ```dch/project/```
 
 ## Available services
